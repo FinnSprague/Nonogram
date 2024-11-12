@@ -14,6 +14,7 @@ Write each function description as follows:
 ```ocaml
 (* 
   function_name
+  - brief function description 
   PARAMS:
   - (param_name : type) - description of the parameter
   
