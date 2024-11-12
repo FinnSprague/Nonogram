@@ -35,11 +35,14 @@ let rec len lst =
   - A row of combined SQUARE and EMPTY types. Row length might exceed or subceed total row length. 
 *)
 
-let rec create_row (constraints : int list) (gap : int): (square list) =
-  Format.print_string("creating row... \n") ; 
-  match constraints with 
-  | [] -> []
-  | h :: t -> (repeat_square BOX h) @ (repeat_square EMP gap) @ create_row t gap 
+let create_row (constraints : int list) (gap : int) (init_gap : int ): (square list) =
+  let rec create_row' constraints gap init_gap = 
+    Format.print_string("creating row... \n") ; 
+    match constraints with 
+    | [] -> []
+    | h :: t -> (repeat_square BOX h) @ (repeat_square EMP gap) @ create_row' t gap init_gap
+  in
+  repeat_square EMP init_gap @ create_row' constraints gap init_gap
 ;;
 
 (* 
@@ -89,8 +92,8 @@ let complete_row (row : square list) (xLen : int) : square list =
   RETURN
   - square list - a single permutation of a row 
 *)
-let generate_permutation (constraints : int list ) (xLen : int ) (gap : int) : (square list ) = 
-  let perm = create_row constraints gap in
+let generate_permutation (constraints : int list ) (xLen : int ) (gap : int) (initGap : int): (square list ) = 
+  let perm = create_row constraints gap initGap in
   let perm_verify = verify_row perm xLen in
   if perm_verify = 1 then complete_row perm xLen 
   else if perm_verify = -1 then [] 
@@ -102,7 +105,7 @@ let generate_permutation (constraints : int list ) (xLen : int ) (gap : int) : (
 *)
 
 let gen_permutation_list (constraints : int list list) (xLen : int) : (square list list ) = 
-  List.map (fun x -> generate_permutation x xLen 1) constraints ;;
+  List.map (fun x -> generate_permutation x xLen 1 0) constraints ;;
 
 
 (* PRINTING METHODS *)
@@ -133,4 +136,5 @@ let sample_grid = [
   [3; 4]
 ] ;;
 
-print_grid (gen_permutation_list sample_grid 10) ;; 
+let sample_row = [1;2;];; 
+
