@@ -13,6 +13,16 @@ let rec len (lst : 'a list) : int =
   | h :: t -> 1 + len t 
 ;;
 
+(* 
+  repeat_square
+  - repeats a type square n times 
+  PARAMS:
+  - (sq : sqare) - what type of squares to complete the array with 
+  - (count : int) - how many of type square to fill in. Length of return array.square
+
+  RETURN: 
+  - list of filled in squares. Either BOX or EMPTY.
+*)
 let repeat_square (sq : square) (count : int) : (square list) = 
   let rec repeat_box' sq count acc = 
     match count with 
@@ -22,16 +32,22 @@ let repeat_square (sq : square) (count : int) : (square list) =
   repeat_box' sq count [] 
 ;;
 
+(* 
+  generate_gaps
+  - generates a numerical list of lists representing the length of gaps in every permutation
+  PARAMS:
+  - (num : int) - number of constraints 
+  - (limit : int) - total number of gaps cannot exceed the limit. Normally given by (length of grid) - (sum of constraints)
+
+  RETURN: 
+  - a list of list of lengths of all gaps
+*)
 let generate_gaps num limit  =
-  (* Recursive function to build lists with constraints *)
   let rec generate current_list remaining_sum remaining_num is_first_element =
     if remaining_num = 0 then
-      (* If we reached the required length, return the list if it satisfies the sum constraint *)
       if remaining_sum >= 0 then [List.rev current_list] else []
     else
-      (* Determine the minimum value for the current element *)
       let min_value = if is_first_element then 0 else 1 in
-      (* Try each possible value for the current element *)
       let rec try_value value acc =
         if value > remaining_sum then acc
         else
@@ -43,6 +59,16 @@ let generate_gaps num limit  =
   generate [] limit num true
 ;;
 
+(* 
+  generate_permutations
+  - generates a list of all permutations. Some might be incomplete and all are reversed.
+  PARAMS:
+  - (constraints : int list) - numerical constraints on row 
+  - (xLen : int) - length of grid
+
+  RETURN: 
+  - all permutations as a square list
+*)
 let generate_permutations (constraints : int list) (xLen : int) : square list list =
   let all_gaps = generate_gaps (len constraints)  ( xLen - (sum constraints)) in
   let rec generate_permutations' constraints all_gaps acc =
@@ -58,6 +84,15 @@ let generate_permutations (constraints : int list) (xLen : int) : square list li
 ;;
 
 
+(* 
+  complete_all_permutations
+  PARAMS:
+  - (perms : square list list) - all permutations 
+  - (xLen : int) - length of grid
+  
+  RETURN: 
+  - a complete list of rows, unreversed and filled. 
+*)
 let complete_all_permutations (perms : square list list) (xLen : int): square list list = 
   let complete_row (lst : square list) (xLen : int) : square list = 
     if len lst = xLen then List.rev lst 
@@ -66,10 +101,11 @@ let complete_all_permutations (perms : square list list) (xLen : int): square li
   List.map (fun x -> complete_row x xLen) perms 
 ;;
 
-
-
-
-
+(* motherfunction *)
+let compute_permutations (constraints : int list) (xLen : int) : square list list = 
+  let permutations = generate_permutations constraints xLen in 
+  complete_all_permutations permutations xLen 
+;;
 
 
 
@@ -95,9 +131,11 @@ let rec print_arr_square (lst : square list) : unit =
 ;;
 
 
+(* Test inputs *)
+
 let clues = [3;2;1];; 
 
-let generated = complete_all_permutations (generate_permutations clues 10) 10 ;; 
+let generated = compute_permutations clues 10 ;; 
 let gaps = generate_gaps (len [3;2;1;]) (10 - sum [3;2;1;]) ;; 
 List.iter (fun x -> print_arr_square x) generated ;; 
 
