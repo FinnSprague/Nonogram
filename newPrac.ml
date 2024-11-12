@@ -11,18 +11,18 @@ type square = BOX | EMPTY | BLANK ;;
   - list of filled in squares. Either BOX or EMPTY.
 *)
 let repeat_square (sq : square) (count : int) : (square list) = 
-  let repeat_box' sq count acc = 
+  let rec repeat_box' sq count acc = 
     match count with 
     | 0 -> acc 
-    | x -> repeat_box' sq (count - 1) ([sq] :: acc)
+    | x -> repeat_box' sq (count - 1) ([sq] @ acc)
   in 
   repeat_box' sq count [] 
 ;;
 
-let len lst = 
+let rec len lst = 
   match lst with 
   | [] -> 0
-  | h :: t -> 1 + sum t 
+  | h :: t -> 1 + len t 
 ;; 
 
 (* 
@@ -35,10 +35,10 @@ let len lst =
   - A row of combined SQUARE and EMPTY types. Row length might exceed or subceed total row length. 
 *)
 
-let rec insert_empty (constraints : int list) (gap : int): (square list) =
+let rec create_row (constraints : int list) (gap : int): (square list) =
   match constraints with 
-  | [] -> verify acc 
-  | h :: t -> (repeat_square BOX h) @ (repeat_square EMPTY gap) @ create_row t xLen gap 
+  | [] -> []
+  | h :: t -> (repeat_square BOX h) @ (repeat_square EMPTY gap) @ create_row t gap 
 ;;
 
 (* 
@@ -68,14 +68,13 @@ let verify_row (row : square list) (xLen : int) : int =
 let complete_row (row : square list) (xLen : int) : square list = 
   let res = verify_row row xLen in 
   if res = 0 then row 
-  else if res = -1 then fail with InvalidRow 
+  else if res = -1 then [] 
   else 
     let remainingSquares = (len row) - xLen in 
     row @ repeat_square EMPTY remainingSquares
   ;; 
 ;;
 
-let get_permutations (contraints : int list) (xLen : int) : (square list list) =
-  let tempLen = xLen in 
-  match tempLen with 
-  | 0 -> 
+
+Format.print_string("hello ");;
+Format.print_string("world! ");;
