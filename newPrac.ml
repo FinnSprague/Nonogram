@@ -1,5 +1,5 @@
 
-type square = BOX | EMPTY | BLANK ;;
+type square = BOX | EMP | BLANK ;;
 
 (* 
   repeat_square
@@ -39,7 +39,7 @@ let rec create_row (constraints : int list) (gap : int): (square list) =
   Format.print_string("creating row... \n") ; 
   match constraints with 
   | [] -> []
-  | h :: t -> (repeat_square BOX h) @ (repeat_square EMPTY gap) @ create_row t gap 
+  | h :: t -> (repeat_square BOX h) @ (repeat_square EMP gap) @ create_row t gap 
 ;;
 
 (* 
@@ -72,13 +72,24 @@ let complete_row (row : square list) (xLen : int) : square list =
   else if res = -1 then [] 
   else 
     let remainingSquares = xLen - (len row) in 
-    row @ repeat_square EMPTY remainingSquares
+    row @ repeat_square EMP remainingSquares
   ;; 
 ;;
 
 
-let generate_permutation (constraints : int list ) (xLen : int ) : (square list ) = 
-  let gap = 1 in 
+(*
+  generate_permutation
+  - generates a single permutation according to the gap between BOX's
+
+  PARAMS:
+  - (constraints : int) - constraints on row
+  - (xLen : int) - length of row
+  - (gap : int)
+
+  RETURN
+  - square list - a single permutation of a row 
+*)
+let generate_permutation (constraints : int list ) (xLen : int ) (gap : int) : (square list ) = 
   let perm = create_row constraints gap in
   let perm_verify = verify_row perm xLen in
   if perm_verify = 1 then complete_row perm xLen 
@@ -86,10 +97,18 @@ let generate_permutation (constraints : int list ) (xLen : int ) : (square list 
   else perm 
 ;;
 
+(* gen_permutation_list 
+    - generates a grid of rows ALL according to a single gap value
+*)
+
+let gen_permutation_list (constraints : int list list) (xLen : int) : (square list list ) = 
+  List.map (fun x -> generate_permutation x xLen 1) constraints ;;
+
+
 (* PRINTING METHODS *)
 
 let format_square (sq : square) : string = 
-  if sq = BOX then "BOX" else if sq = EMPTY then "EMPTY" else if sq = BLANK then "BLANK" else "" 
+  if sq = BOX then "BOX" else if sq = EMP then "EMP" else if sq = BLANK then "BLANK" else "" 
 ;;
 
 let rec print_row (row : square list) : unit = 
@@ -99,6 +118,19 @@ let rec print_row (row : square list) : unit =
   | h :: t -> Format.print_string(format_square h) ; print_row t 
 ;;
 
+let rec print_grid (grid : square list list) : unit = 
+  Format.print_string("\n") ; 
+  match grid with 
+  | [] -> Format.print_string(" ")
+  | [[]] -> Format.print_string(" ") 
+  | h :: t -> print_row h ; print_grid t 
+;;
 
-Format.print_string("pre-generation.. ");; 
-print_row(generate_permutation (1::1::[]) 10);; 
+let sample_grid = [
+  [1;2;3] ;
+  [2;3] ;
+  [4; 1] ;
+  [3; 4]
+] ;;
+
+print_grid (gen_permutation_list sample_grid 10) ;; 
