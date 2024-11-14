@@ -1,5 +1,3 @@
-
-
 type square = BOX | EMP | BLANK ;;
 
 (* Printing methods *) 
@@ -82,17 +80,6 @@ let generate_gaps (num : int)  ( limit : int) : int list list =
   generate [] limit num true
 ;;
 
-let generate_single_permutation (constraints : int list) (gaps : int list ) : square list = 
-  let rec generate_single_permutation' constraints gaps (acc : square list) = 
-    match constraints, gaps with 
-    | [], [] -> acc 
-    | con :: x, gap :: y -> 
-      generate_single_permutation' x y (acc @ (repeat_square EMP gap) @ (repeat_square BOX con ))
-    | _ -> Format.print_string("error \n") ; []
-  in
-  generate_single_permutation' constraints gaps []
-;;
-
 (* 
   generate_permutations
   - generates a list of all permutations. Some might be incomplete and all are reversed.
@@ -105,6 +92,16 @@ let generate_single_permutation (constraints : int list) (gaps : int list ) : sq
 *)
 
 let generate_all_permutations (constraints : int list) (xLen : int) : square list list = 
+  let generate_single_permutation (constraints : int list) (gaps : int list ) : square list = 
+    let rec generate_single_permutation' constraints gaps (acc : square list) = 
+      match constraints, gaps with 
+      | [], [] -> acc 
+      | con :: x, gap :: y -> 
+        generate_single_permutation' x y (acc @ (repeat_square EMP gap) @ (repeat_square BOX con ))
+      | _ -> Format.print_string("error \n") ; []
+    in
+    generate_single_permutation' constraints gaps []
+  in
   let all_gaps = generate_gaps (len constraints) (xLen - (sum constraints)) in
   let rec generate_permutations' ( constraints : int list ) (gaps : int list list)  (acc : square list list ) = 
     match gaps with  
@@ -137,19 +134,4 @@ let compute_permutations (constraints : int list) (xLen : int) : square list lis
   complete_all_permutations permutations xLen 
 ;;
 
-
-
-
-
-
-
-
 (* Test inputs *)
-
-let clues = [4;2;1];; 
-
-let generated = compute_permutations clues 10 ;; 
-let gaps = generate_gaps (len [4;2]) (10 - sum [3;2;1;]) ;; 
-List.iter (fun x -> print_arr_square x) generated ;; 
-
- 
