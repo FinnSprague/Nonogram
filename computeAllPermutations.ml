@@ -1,6 +1,29 @@
 
 
 type square = BOX | EMP | BLANK ;;
+
+(* Printing methods *) 
+
+let format_square (sq : square ) : string = 
+  if sq = BOX then "BOX" else if sq = EMP then "EMP" else "BLANK" 
+;;
+
+let rec print_arr_int (lst : int list) : unit = 
+  match lst with 
+  | [] -> Format.print_string("\n") 
+  | h :: t -> Format.print_int(h) ; Format.print_string(", ") ; print_arr_int t 
+;;  
+
+let rec print_arr_square (lst : square list) : unit = 
+  Format.print_string(" | ") ; 
+  match lst with 
+  | [] -> Format.print_string("\n \n")
+  | h :: t -> Format.print_string(format_square h) ; print_arr_square t 
+;;
+
+
+
+(* Methods *)
 let rec sum (lst : int list) : int = 
   match lst with
   | [] -> 0 
@@ -42,8 +65,8 @@ let repeat_square (sq : square) (count : int) : (square list) =
   RETURN: 
   - a list of list of lengths of all gaps
 *)
-let generate_gaps num limit  =
-  let rec generate current_list remaining_sum remaining_num is_first_element =
+let generate_gaps (num : int)  ( limit : int) : int list list =
+  let rec generate ( current_list : int list ) ( remaining_sum : int)  ( remaining_num : int) ( is_first_element : bool ) : int list list =
     if remaining_num = 0 then
       if remaining_sum >= 0 then [List.rev current_list] else []
     else
@@ -59,6 +82,17 @@ let generate_gaps num limit  =
   generate [] limit num true
 ;;
 
+let generate_single_permutation (constraints : int list) (gaps : int list ) : square list = 
+  let rec generate_single_permutation' constraints gaps (acc : square list) = 
+    match constraints, gaps with 
+    | [], [] -> acc 
+    | con :: x, gap :: y -> 
+      generate_single_permutation' x y (acc @ (repeat_square EMP gap) @ (repeat_square BOX con ))
+    | _ -> Format.print_string("error \n") ; []
+  in
+  generate_single_permutation' constraints gaps []
+;;
+
 (* 
   generate_permutations
   - generates a list of all permutations. Some might be incomplete and all are reversed.
@@ -69,20 +103,16 @@ let generate_gaps num limit  =
   RETURN: 
   - all permutations as a square list
 *)
-let generate_permutations (constraints : int list) (xLen : int) : square list list =
-  let all_gaps = generate_gaps (len constraints)  ( xLen - (sum constraints)) in
-  let rec generate_permutations' constraints all_gaps acc =
-    match constraints, all_gaps with
-    | [], [] -> [List.rev acc]  
-    | con :: rest_con, gap :: rest_gap ->
-      let new_acc = acc @ (repeat_square EMP gap) @ (repeat_square BOX con) in
-      generate_permutations' rest_con rest_gap new_acc
-    | _ -> Format.print_string "error"; [[BLANK]] 
-  in
-  (* Generate permutations for each gap configuration *)
-  List.flatten (List.map (fun gaps -> List.rev (generate_permutations' constraints gaps [])) all_gaps)
-;;
 
+let generate_all_permutations (constraints : int list) (xLen : int) : square list list = 
+  let all_gaps = generate_gaps (len constraints) (xLen - (sum constraints)) in
+  let rec generate_permutations' ( constraints : int list ) (gaps : int list list)  (acc : square list list ) = 
+    match gaps with  
+    | [] -> acc
+    | gap :: t -> generate_permutations' constraints t (acc @ [generate_single_permutation constraints gap])
+  in
+  generate_permutations' constraints all_gaps []
+;;
 
 (* 
   complete_all_permutations
@@ -95,15 +125,15 @@ let generate_permutations (constraints : int list) (xLen : int) : square list li
 *)
 let complete_all_permutations (perms : square list list) (xLen : int): square list list = 
   let complete_row (lst : square list) (xLen : int) : square list = 
-    if len lst = xLen then List.rev lst 
-    else List.rev (lst @ repeat_square EMP (xLen - (len lst)))
+    if len lst = xLen then lst 
+    else lst @ repeat_square EMP (xLen - (len lst))
   in
-  List.map (fun x -> complete_row x xLen) perms 
+  List.map (fun x -> complete_row x xLen) perms
 ;;
 
 (* motherfunction *)
 let compute_permutations (constraints : int list) (xLen : int) : square list list = 
-  let permutations = generate_permutations constraints xLen in 
+  let permutations = generate_all_permutations constraints xLen in 
   complete_all_permutations permutations xLen 
 ;;
 
@@ -111,32 +141,15 @@ let compute_permutations (constraints : int list) (xLen : int) : square list lis
 
 
 
-(* Printing methods *) 
 
-let format_square (sq : square ) : string = 
-  if sq = BOX then "BOX" else if sq = EMP then "EMP" else "BLANK" 
-;;
-
-let rec print_arr_int (lst : int list) : unit = 
-  match lst with 
-  | [] -> Format.print_string("\n") 
-  | h :: t -> Format.print_int(h) ; Format.print_string(", ") ; print_arr_int t 
-;;  
-
-let rec print_arr_square (lst : square list) : unit = 
-  Format.print_string(" | ") ; 
-  match lst with 
-  | [] -> Format.print_string("\n \n")
-  | h :: t -> Format.print_string(format_square h) ; print_arr_square t 
-;;
 
 
 (* Test inputs *)
 
-let clues = [3;2;1];; 
+let clues = [4;2;1];; 
 
 let generated = compute_permutations clues 10 ;; 
-let gaps = generate_gaps (len [3;2;1;]) (10 - sum [3;2;1;]) ;; 
+let gaps = generate_gaps (len [4;2]) (10 - sum [3;2;1;]) ;; 
 List.iter (fun x -> print_arr_square x) generated ;; 
 
  
