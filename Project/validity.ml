@@ -6,19 +6,15 @@
   - (grid : square list list) - nongram grid built up so far
   - (new_row : square list) - new permutation being added to grid
   - (column_index : int) - index of column in grid
-  - (row_index : int) - index of row in grid
   
   
   RETURN:
   - square list - column at column_index of grid
 *)
 
-let rec extract_column grid new_row comlumn_index row_index = 
+let rec extract_column grid new_row comlumn_index = 
   let base_column = List.map(fun row -> List.nth row comlumn_index) grid in
-  let partial_column = if row_index = List.length grid then base_column @ [List.nth new_row comlumn_index]
-  else base_column
-  in 
-  partial_column
+  base_column @ [List.nth new_row comlumn_index]
 ;;
 
 (* 
