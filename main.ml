@@ -1,6 +1,7 @@
 (* Exception in case we couldn't find a solution. *)
 exception NotFound
 
+
 (* Type definition *)
 type grid = int list list (* Grid is represented as a matrix. *)
 type 'a tree = Empty | Node of ('a tree) list * 'a
