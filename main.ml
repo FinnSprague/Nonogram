@@ -12,6 +12,7 @@ let format_square (sq : square ) : string =
 let rec print_arr_int (lst : int list) : unit = 
   match lst with 
   | [] -> Format.print_string("\n") 
+  | [x] -> Format.print_int(x) ; Format.print_string ("\n") 
   | h :: t -> Format.print_int(h) ; Format.print_string(", ") ; print_arr_int t 
 ;;  
 
@@ -22,8 +23,8 @@ let rec print_arr_square (lst : square list) : unit =
   | h :: t -> Format.print_string(format_square h) ; print_arr_square t 
 ;;
 
-let print_grid (g: grid) = 
-    List.map print_arr_square g;;
+let print_grid (g: grid) : unit  = 
+    List.iter ( fun x -> print_arr_square x ) g ;; 
 
 (* Methods *)
 let rec sum (lst : int list) : int = 
@@ -158,16 +159,19 @@ let rec dfs (depth: int) (state: grid) (grid_size: int) (vertical_hints: int lis
     let rec verify possibilities_list = match possibilities_list with
     | [] -> ()
     | h::t -> (
-        let current_state = List.init depth (fun i -> (List.nth state i)) in
-        current_state = current_state@[h];
-        current_state = List.append current_state (List.init (grid_size - depth - 1) (fun i ->  (List.init grid_size (fun i -> BLANK))));
+        let current_state = 
+          List.append 
+            (List.init depth (fun i -> List.nth state i)) 
+            [h] @
+          List.init (grid_size - depth - 1) (fun _ -> List.init grid_size (fun _ -> BLANK)) 
+        in
         let is_valid = validate current_state horizontal_hints in
-        if is_valid = true then (
-            if depth = grid_size - 1 then (print_grid current_state; ())
+        if is_valid then (
+            if depth = grid_size - 1 then (print_grid current_state) 
             else dfs (depth + 1) current_state grid_size vertical_hints horizontal_hints
         );
         verify t
-    ) in verify possibilities;;
+      ) in verify possibilities;;
     
 
 (* Test inputs *)
