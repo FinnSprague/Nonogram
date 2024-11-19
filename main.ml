@@ -24,7 +24,9 @@ let rec print_arr_square (lst : square list) : unit =
 ;;
 
 let print_grid (g: grid) = 
-    List.map print_arr_square g;;
+    List.map print_arr_square g;
+    ()
+;;
 
 (* Methods *)
 let rec sum (lst : int list) : int = 
@@ -139,9 +141,79 @@ let compute_permutations (constraints : int list) (xLen : int) : square list lis
   complete_all_permutations permutations xLen 
 ;;
 
-(* Taisuke's code from here. *)
 
-let validate (current_state: grid) (horizontal_hints: int list list) = true;;
+(* ---------- Ayo's Validity Check ----------*)
+(* 
+  extract_column
+  - extracts a column from the grid, including the new row permutation being added 
+  PARAMS:
+  - (grid : square list list) - nongram grid built up so far
+  - (new_row : square list) - new permutation being added to grid
+  - (column_index : int) - index of column in grid
+  
+  
+  RETURN:
+  - square list - column at column_index of grid
+*)
+
+let rec extract_column grid new_row column_index = 
+  let base_column = List.map(fun row -> List.nth row column_index) grid in
+  base_column @ [List.nth new_row column_index]
+;;
+
+(* 
+  column_constraint_check
+  - checks extracted column against column constraints 
+  PARAMS:
+  - (partial_column : square list) - column of grid (which is not completed)
+  - (constraint : int list) - constraints placed on column of grid
+  
+  RETURN:
+  - boolean - true if proposed column conforms to constraints, false otherwise
+*)
+
+let column_validator (partial_column : square list)  ( cons : int list ) : bool = 
+  let rec column_validator_helper constraints current_column current_block = match constraints, current_column with
+  |[], [] -> current_block = 0
+  |[], EMP :: tl -> column_validator_helper [] tl current_block
+  |[], BOX :: _ -> false
+  |h :: tlc, BOX :: tl -> if current_block + 1 = h then column_validator_helper tlc tl 0
+  else column_validator_helper constraints tl (current_block + 1)
+  |h :: _, EMP:: tl -> if current_block > 0 then false else column_validator_helper constraints tl 0
+  |h :: _, [] when current_block > 0 -> current_block = h
+  |_, [] -> true
+  |_ -> false 
+in
+column_validator_helper cons partial_column 0
+
+;;
+
+(* 
+  row_validity
+  - checks if a given new row permutation will fit with previous rows and column constraints of all columns in grid
+  PARAMS:
+  - (grid : square list list) - nongram grid built up so far
+  - (new_row : square list) - new permutation being added to grid
+  - (column_constraints : int list list) - list of constraints placed on columns of grid
+  
+  RETURN:
+  - boolean - true if all proposed columns when new row has been added conform to constraints, false otherwise
+*)
+
+let row_validity (grid : square list list) (new_row : square list) 
+                 (column_constrains : int list list) : bool = 
+  let rec validate_columns index = 
+    if index >= List.length column_constrains then true
+    else
+      let partial_column = extract_column grid new_row index in
+      let cons = List.nth column_constrains index in
+      if column_validator partial_column cons then validate_columns (index + 1)
+      else false
+in
+validate_columns 0
+;;
+
+(* Taisuke's dfs *)
 
 (*
     dfs
@@ -158,26 +230,34 @@ let validate (current_state: grid) (horizontal_hints: int list list) = true;;
  *)
 
 let rec dfs (depth: int) (state: grid) (grid_size: int) (vertical_hints: int list list) (horizontal_hints: int list list): unit =
+    print_grid state;
     let possibilities = compute_permutations (List.nth vertical_hints depth) grid_size in
-    if possibilities = [] then raise NotFound
+    if possibilities = [] then Printf.printf "No possibilities\n"
     else
         let rec verify possibilities_list = match possibilities_list with
-    | [] -> raise NotFound
+    | [] -> Printf.printf "Run out of possibilities."
     | h::t -> (
-        let current_state = List.init depth (fun i -> (List.nth state i)) in
-        current_state = current_state@[h];
-        current_state = List.append current_state (List.init (grid_size - depth - 1) (fun i ->  (List.init grid_size (fun i -> BLANK))));
-        let is_valid = validate current_state horizontal_hints in
-        if is_valid = true then (
-            if depth = grid_size - 1 then (print_grid current_state; ())
-            else dfs (depth + 1) current_state grid_size vertical_hints horizontal_hints
-            );
+        Printf.printf "Hoge\n";
+        let is_valid = row_validity state h horizontal_hints in
+        if is_valid then (
+            let new_state = List.init depth (fun i -> (List.nth state i)) in
+            new_state = new_state@[h];
+            if depth = grid_size - 1 then print_grid new_state
+            else (
+                Printf.printf "Fuga\n";
+                dfs (depth + 1) new_state grid_size vertical_hints horizontal_hints
+            )
+        );
         verify t
-        ) in verify possibilities;;
-
+    ) in verify possibilities
+;;
 
 (* Test inputs *)
 let main () = (
-    Printf.printf "Program started.\n";
+
+    let vertical_hints = [[3]; [1; 1; 1]; [3]; [1]; [3]] in
+    let horizontal_hints = [[4]; [1; 1]; [3; 1]; [1]; [2]] in
+    if row_validity [] [BOX; BOX; BOX; EMP; EMP] horizontal_hints then Printf.printf "Hoge\n";
+    ()
 )
 let () = main ()
