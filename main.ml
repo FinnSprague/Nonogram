@@ -23,10 +23,14 @@ let rec print_arr_square (lst : square list) : unit =
   | h :: t -> Format.print_string(format_square h) ; print_arr_square t 
 ;;
 
-let print_grid (g: grid) = 
-    List.map print_arr_square g;
-    ()
-;;
+let print_grid (g: grid) : unit  = 
+    List.iter ( fun x -> 
+      List.iter (fun s ->
+        Format.print_string("|") ;
+        if s = BOX then Format.print_string("BOX")  else Format.print_string("   ") 
+      ) x 
+    ) g 
+;; 
 
 (* Methods *)
 let rec sum (lst : int list) : int = 
