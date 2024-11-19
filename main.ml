@@ -1,4 +1,5 @@
 exception Error of string
+exception NotFound
 
 type square = BOX | EMP | BLANK ;;
 
@@ -140,23 +141,28 @@ let compute_permutations (constraints : int list) (xLen : int) : square list lis
 
 (* Taisuke's code from here. *)
 
-
-let convert_list_into_constraints (sl: square list): int list = 
-    let rec aux (sl: square list) (consecutive_boxes: int): int list = 
-        match sl with
-        | [] -> if consecutive_boxes <> 0 then [consecutive_boxes] else []
-        | BOX::rest -> aux rest (consecutive_boxes + 1)
-        | EMP::rest -> if consecutive_boxes <> 0 then consecutive_boxes::aux rest 0 else aux rest 0
-        | _ -> raise (Error "Program failed.\n") in aux sl 0
-;;
-
 let validate (current_state: grid) (horizontal_hints: int list list) = true;;
 
-(* depth is 0-indexed. *)
+(*
+    dfs
+    PARAMS:
+        - (depth: int) - the current depth from the root ( 0-indexed )
+        - (state: grid) - the current grid
+        - (grid_size: int) - the grid size ( N * N )
+        - (vertical_hints: int list list) - the hints shown on the left of the Nonogram
+        - (horizontal_hints: int list list) - the hints shown on top of the Nonogram
+
+    RETURN:
+        - unit. This function doesn't return a specific value.
+        - If dfs succeeds, print out the whole grid. If not, throw an excepion NotFound.
+ *)
+
 let rec dfs (depth: int) (state: grid) (grid_size: int) (vertical_hints: int list list) (horizontal_hints: int list list): unit =
     let possibilities = compute_permutations (List.nth vertical_hints depth) grid_size in
-    let rec verify possibilities_list = match possibilities_list with
-    | [] -> ()
+    if possibilities = [] then raise NotFound
+    else
+        let rec verify possibilities_list = match possibilities_list with
+    | [] -> raise NotFound
     | h::t -> (
         let current_state = List.init depth (fun i -> (List.nth state i)) in
         current_state = current_state@[h];
@@ -165,14 +171,13 @@ let rec dfs (depth: int) (state: grid) (grid_size: int) (vertical_hints: int lis
         if is_valid = true then (
             if depth = grid_size - 1 then (print_grid current_state; ())
             else dfs (depth + 1) current_state grid_size vertical_hints horizontal_hints
-        );
+            );
         verify t
-    ) in verify possibilities;;
-    
+        ) in verify possibilities;;
+
 
 (* Test inputs *)
 let main () = (
     Printf.printf "Program started.\n";
-    print_arr_int (convert_list_into_constraints [EMP;EMP;BOX;BOX;EMP;BOX;BOX;BOX])
 )
 let () = main ()
