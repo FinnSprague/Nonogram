@@ -28,17 +28,18 @@ let rec extract_column grid new_row column_index =
   - boolean - true if proposed column conforms to constraints, false otherwise
 *)
 
-let column_validator partial_column constraint = 
+let column_validator partial_column cons = 
   let rec column_validator_helper constraints current_column current_block = match constraints, current_column with
   |[], [] -> current_block = 0
   |[], EMP :: tl -> column_validator_helper [] tl current_block
   |[], BOX :: _ -> false
-  |h :: tlc, BOX :: tl -> column_validator_helper (if current_block + 1 = h then tlc else  constraints) tl (if current_block + 1 = h then 0 else  current_block + 1)
+  |h :: tlc, BOX :: tl -> if current_block + 1 = h then column_validator_helper tlc tl 0
+  else column_validator_helper constraints tl (current_block + 1)
   |h :: _, EMP:: tl -> if current_block > 0 then false else column_validator_helper constraints tl 0
   |h :: _, [] when current_block > 0 -> current_block = h
   |_, [] -> true
 in
-column_validator_helper partial_column constraint 0
+column_validator_helper partial_column cons 0
 
 ;;
 
@@ -59,8 +60,8 @@ let row_validity grid new_row column_constrains =
     if index >= List.length column_constrains then true
     else
       let partial_column = extract_column grid new_row index in
-      let constraint = List.nth column_constrains index in
-      if column_validator partial_column constraint then validate_columns (index + 1)
+      let cons = List.nth column_constrains index in
+      if column_validator partial_column cons then validate_columns (index + 1)
       else false
 in
 validate_columns 0
