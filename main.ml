@@ -1,39 +1,33 @@
 exception Error of string
+exception NotFound
 
 type square = BOX | EMP | BLANK ;;
 
 type grid = square list list;;
-(* ---------- Printing methods ----------  *) 
+(* Printing methods *) 
 
 let format_square (sq : square ) : string = 
-  if sq = BOX then "BOX" else if sq = EMP then "EMP" else "BLANK" 
+  if sq = BOX then "■" else if sq = EMP then "□" else " " 
 ;;
 
 let rec print_arr_int (lst : int list) : unit = 
   match lst with 
   | [] -> Format.print_string("\n") 
-  | [x] -> Format.print_int(x) ; Format.print_string ("\n") 
   | h :: t -> Format.print_int(h) ; Format.print_string(", ") ; print_arr_int t 
 ;;  
 
 let rec print_arr_square (lst : square list) : unit = 
-  Format.print_string(" | ") ; 
   match lst with 
-  | [] -> Format.print_string("\n \n")
+  | [] -> Format.print_string("\n")
   | h :: t -> Format.print_string(format_square h) ; print_arr_square t 
 ;;
 
-let print_grid (g: grid) : unit  = 
-    List.iter ( fun x -> print_arr_square x ) g ;; 
+let print_grid (g: grid) = 
+    List.iter print_arr_square g;
+    ()
+;;
 
-
-
-
-
-
-
-
-(* ---------- Finn's Permutation Generator ---------- *)
+(* Methods *)
 let rec sum (lst : int list) : int = 
   match lst with
   | [] -> 0 
@@ -44,6 +38,13 @@ let rec len (lst : 'a list) : int =
   match lst with 
   | [] -> 0 
   | h :: t -> 1 + len t 
+;;
+
+let rec take lst n =
+  if n <= 0 then []
+  else match lst with
+       | [] -> []
+       | h::t -> h :: take t (n - 1)
 ;;
 
 (* 
@@ -146,123 +147,120 @@ let compute_permutations (constraints : int list) (xLen : int) : square list lis
   complete_all_permutations permutations xLen 
 ;;
 
-
-
-
-
-
-
-
-
-(* ---------- Ayo's Validity Check ----------*)
-(* 
+(* ---------- Validity Check ----------*)
+(*
   extract_column
   - extracts a column from the grid, including the new row permutation being added 
   PARAMS:
-  - (grid : square list list) - nongram grid built up so far
+  - (grid : square list list) - nonogram grid built up so far
   - (new_row : square list) - new permutation being added to grid
   - (column_index : int) - index of column in grid
-  
-  
+
   RETURN:
   - square list - column at column_index of grid
 *)
 
-let rec extract_column grid new_row column_index = 
-  let base_column = List.map(fun row -> List.nth row column_index) grid in
+let extract_column grid new_row column_index = 
+  let base_column = List.map (fun row -> List.nth row column_index) grid in
   base_column @ [List.nth new_row column_index]
 ;;
 
-(* 
-  column_constraint_check
+(*
+  column_validator
   - checks extracted column against column constraints 
   PARAMS:
   - (partial_column : square list) - column of grid (which is not completed)
   - (constraint : int list) - constraints placed on column of grid
-  
+
   RETURN:
   - boolean - true if proposed column conforms to constraints, false otherwise
 *)
 
 let column_validator (partial_column : square list)  ( cons : int list ) : bool = 
   let rec column_validator_helper constraints current_column current_block = match constraints, current_column with
-  |[], [] -> current_block = 0
-  |[], EMP :: tl -> column_validator_helper [] tl current_block
-  |[], BOX :: _ -> false
-  |h :: tlc, BOX :: tl -> if current_block + 1 = h then column_validator_helper tlc tl 0
-  else column_validator_helper constraints tl (current_block + 1)
-  |h :: _, EMP:: tl -> if current_block > 0 then false else column_validator_helper constraints tl 0
-  |h :: _, [] when current_block > 0 -> current_block = h
-  |_, [] -> true
-  |_ -> false 
-in
-column_validator_helper cons partial_column 0
-
+  | [], [] -> current_block = 0
+  | [], EMP :: tl -> column_validator_helper [] tl current_block
+  | [], BOX :: _ -> false
+  | h :: tlc, BOX :: tl -> 
+      let current_block = current_block + 1 in
+      if current_block = h then
+        column_validator_helper tlc tl 0
+      else
+        column_validator_helper constraints tl current_block
+  | h :: _, EMP :: tl -> 
+      if current_block > 0 && current_block <> h then false
+      else column_validator_helper constraints tl 0
+  | h :: tlc, [] -> 
+      if current_block > h then false
+      else true
+  | _ -> false 
+  in
+  column_validator_helper cons partial_column 0
 ;;
 
-(* 
+(*
   row_validity
   - checks if a given new row permutation will fit with previous rows and column constraints of all columns in grid
   PARAMS:
-  - (grid : square list list) - nongram grid built up so far
+  - (grid : square list list) - nonogram grid built up so far
   - (new_row : square list) - new permutation being added to grid
   - (column_constraints : int list list) - list of constraints placed on columns of grid
-  
+
   RETURN:
   - boolean - true if all proposed columns when new row has been added conform to constraints, false otherwise
 *)
 
 let row_validity (grid : square list list) (new_row : square list) 
-                 (column_constrains : int list list) : bool = 
+                 (column_constraints : int list list) : bool = 
   let rec validate_columns index = 
-    if index >= List.length column_constrains then true
+    if index >= len column_constraints then true
     else
       let partial_column = extract_column grid new_row index in
-      let cons = List.nth column_constrains index in
+      let cons = List.nth column_constraints index in
       if column_validator partial_column cons then validate_columns (index + 1)
       else false
-in
-validate_columns 0
+  in
+  validate_columns 0
 ;;
 
-(* ---------- Taisuke's DFS ---------- . *)
-
-
-let convert_list_into_constraints (sl: square list): int list = 
-    let rec aux (sl: square list) (consecutive_boxes: int): int list = 
-        match sl with
-        | [] -> if consecutive_boxes <> 0 then [consecutive_boxes] else []
-        | BOX::rest -> aux rest (consecutive_boxes + 1)
-        | EMP::rest -> if consecutive_boxes <> 0 then consecutive_boxes::aux rest 0 else aux rest 0
-        | _ -> raise (Error "Program failed.\n") in aux sl 0
+(* dfs function *)
+let rec dfs (depth: int) (state: grid) (grid_size: int)
+            (horizontal_hints: int list list) (vertical_hints: int list list): bool =
+    if depth = grid_size then (
+        print_grid state;
+        true  
+    ) else (
+        let possibilities = compute_permutations (List.nth horizontal_hints depth) grid_size in
+        if possibilities = [] then (
+            false
+        ) else (
+            let rec try_possibilities poss_list =
+                match poss_list with
+                | [] -> false  
+                | new_row :: rest ->
+                    if row_validity state new_row vertical_hints then (
+                        let new_state = state @ [new_row] in
+                        if dfs (depth + 1) new_state grid_size horizontal_hints vertical_hints then
+                            true  
+                        else
+                            try_possibilities rest
+                    ) else
+                        try_possibilities rest
+            in
+            try_possibilities possibilities
+        )
+    )
 ;;
-
-let validate (current_state: grid) (horizontal_hints: int list list) = true;;
-
-(* depth is 0-indexed. *)
-let rec dfs (depth: int) (state: grid) (grid_size: int) (vertical_hints: int list list) (horizontal_hints: int list list): unit =
-    let possibilities = compute_permutations (List.nth vertical_hints depth) grid_size in
-    let rec verify possibilities_list = match possibilities_list with
-    | [] -> ()
-    | h::t -> (
-        let current_state = 
-          List.append 
-            (List.init depth (fun i -> List.nth state i)) 
-            [h] @
-          List.init (grid_size - depth - 1) (fun _ -> List.init grid_size (fun _ -> BLANK)) 
-        in
-        let is_valid = validate current_state horizontal_hints in
-        if is_valid then (
-            if depth = grid_size - 1 then (print_grid current_state) 
-            else dfs (depth + 1) current_state grid_size vertical_hints horizontal_hints
-        );
-        verify t
-      ) in verify possibilities;;
-    
 
 (* Test inputs *)
 let main () = (
-    Printf.printf "Program started.\n";
-    print_arr_int (convert_list_into_constraints [EMP;EMP;BOX;BOX;EMP;BOX;BOX;BOX])
+
+    let vertical_hints = [[2;1;];[2;];[4;];[2;];[2;]] in
+    let horizontal_hints = [[2;];[3;];[1;];[1;3;];[3];] in
+    if dfs 0 [] 5 horizontal_hints vertical_hints then
+        Printf.printf "Solution found.\n"
+    else
+        Printf.printf "No solution exists.\n"
 )
 let () = main ()
+
