@@ -141,7 +141,15 @@ let complete_all_permutations (perms : square list list) (xLen : int): square li
   List.map (fun x -> complete_row x xLen) perms
 ;;
 
-(* motherfunction *)
+(* compute_permutations
+    - generates all permutations of a row
+    
+  PARAMS: 
+    - (constraints : int list) - the horizontal constraints of the row 
+    - (xLen : int) - grid length 
+  RETURN: 
+    - square list list - all permutations of a given row 
+*)
 let compute_permutations (constraints : int list) (xLen : int) : square list list = 
   let permutations = generate_all_permutations constraints xLen in 
   complete_all_permutations permutations xLen 
