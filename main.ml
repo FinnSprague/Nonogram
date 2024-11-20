@@ -111,7 +111,7 @@ let generate_all_permutations (constraints : int list) (xLen : int) : square lis
       | [], [] -> acc 
       | con :: x, gap :: y -> 
         generate_single_permutation' x y (acc @ (repeat_square EMP gap) @ (repeat_square BOX con ))
-      | _ -> Format.print_string("error \n") ; []
+      | _ -> failwith "error \n" ; []
     in
     generate_single_permutation' constraints gaps []
   in
