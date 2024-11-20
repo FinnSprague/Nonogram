@@ -111,7 +111,7 @@ let generate_all_permutations (constraints : int list) (xLen : int) : square lis
       | [], [] -> acc 
       | con :: x, gap :: y -> 
         generate_single_permutation' x y (acc @ (repeat_square EMP gap) @ (repeat_square BOX con ))
-      | _ -> failwith "error \n" ; []
+      | _ -> failwith "error \n" 
     in
     generate_single_permutation' constraints gaps []
   in
@@ -255,9 +255,9 @@ let rec dfs (depth: int) (state: grid) (grid_size: int)
 (* Test inputs *)
 let main () = (
 
-    let vertical_hints = [[2;1;];[2;];[4;];[2;];[2;]] in
-    let horizontal_hints = [[2;];[3;];[1;];[1;3;];[3];] in
-    if dfs 0 [] 5 horizontal_hints vertical_hints then
+    let vertical_hints = [[4];[4];[5;6];[2;2;9];[15];[15];[5;6];[7];[8];[8];[8];[8];[8];[7];[5]] in
+    let horizontal_hints = [[4];[6];[3;3];[7];[7];[1;3];[3];[3;5];[4;7];[13];[13];[13];[13];[13];[11]] in
+    if dfs 0 [] 15 horizontal_hints vertical_hints then
         Printf.printf "Solution found.\n"
     else
         Printf.printf "No solution exists.\n"
